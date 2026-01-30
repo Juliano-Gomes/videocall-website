@@ -1,0 +1,69 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+//schemas
+//{roomId:string,RoomTitle:string}
+model UserCommunities {
+  roomId    String @unique
+  RoomTitle String
+  usersId   String
+  userId    Users  @relation(fields: [usersId], references: [id])
+}
+
+model Users {
+  id              String            @unique
+  username        String
+  userCommunities UserCommunities[]
+}
+
+//owner: { id: string; name: string; }; 
+//members : { roomId: string; username: string; userId: string; privilege: string; addedAt: Date; }[]
+model members {
+  id        String   @unique
+  username  String
+  userId    String
+  privilege String
+  addedAt   DateTime
+  roomId    String
+  rooms     Rooms?   @relation(fields: [roomId], references: [RoomId])
+}
+
+model owner {
+  id     String @unique
+  name   String
+  userId String
+  roomId String
+  room   Rooms  @relation(fields: [roomId], references: [RoomId])
+}
+
+model Rooms {
+  RoomId      String    @unique
+  RoomTitle   String
+  description String
+  room_link   String
+  members     members[]
+  createdAt   DateTime
+  owners      owner[]
+  SubRooms    SubRoom[]
+}
+
+// roomId: string; subRoomId: string; subRoomName: string; subRoomType: "call" | "message" | "announcements" | "private"; })
+model SubRoom {
+  subRoomId   String  @unique
+  subRoomType String
+  subRoomName String
+  RoomId      String?
+  rooms       Rooms?  @relation(fields: [RoomId], references: [RoomId])
+}
