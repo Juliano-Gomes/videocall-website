@@ -9,9 +9,9 @@ interface adminInfo{
 
 type Adder={
     roomId:string
-    userid:string,
+    userId:string,
     username:string,
-    privilege:"super_user_admin",
+    privilege:string,
     addedAt:Date
 }
 
@@ -19,7 +19,7 @@ export class addAdminRoom{
     constructor(private admin:adminInfo,RoomAdminsInfo:Adder[]){
         //id this.admin.adminId admin !! - 
         const IsAdmin = RoomAdminsInfo.map((admin)=>{
-            if( admin.userid === this.admin.adminId && admin.roomId === this.admin.roomId){
+            if( admin.userId === this.admin.adminId && admin.roomId === this.admin.roomId && admin.privilege == process.env.privilege!){
                 return admin
             }
         })
@@ -46,7 +46,7 @@ export class addAdminRoom{
         return {
             userid:this.admin.userId,
             username:this.admin.username,
-            privilege:"super_user_admin",
+            privilege:process.env.privilege!,
             addedAt:new Date(),
             roomId:this.admin.roomId
         }
