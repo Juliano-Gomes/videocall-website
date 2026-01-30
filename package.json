@@ -1,0 +1,11 @@
+{
+  "name": "backend-app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:Juliano-Gomes/videocall-website.git",
+  "author": "Juliano-Gomes <juliengomesgomes@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^25.1.0"
+  }
+}
