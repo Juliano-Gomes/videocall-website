@@ -1,8 +1,89 @@
 import { prisma } from "../../lib/prisma";
 import { prismaI } from "../useCases/contract/prisma";
+import { InterfaceLayerError } from "./error-interface-layer/error";
 
 export class PrismaAdapter implements prismaI{
     constructor(private prismaI : typeof prisma){}
+    async sendMessage(props: { username: string; roomId:string;userId: string; subRoomId: string; message: string; }) :Promise<{ message: string; }>{
+        const SubRoomInfo = await this.prismaI.subRoom.findFirst({
+            where:{
+                subRoomId:props.subRoomId
+            },
+            include:{
+                rooms:{
+                    where:{
+                        RoomId:props.roomId
+                    },
+                    select:{
+                        RoomId:true,
+                        RoomTitle:true,
+                        members:{
+                            where:{
+                                userId:props.userId,
+                                username:props.username
+                            }
+                        }
+                    }
+                },
+                MessageContainer:true
+            }
+        })
+
+        //create the message 
+        if(!SubRoomInfo){
+            throw new InterfaceLayerError({
+                name:"SubRoomError",
+                cause:"subRoom not found, Line : 30",
+                message:"the room that you are trying to send message Does not exists",
+                where:__filename
+            })
+        }
+        if(SubRoomInfo.subRoomType != "message" || SubRoomInfo.rooms!.members.length <= 0 || SubRoomInfo.rooms){
+            throw new InterfaceLayerError({
+                name:"Send Message Error",
+                message:"some problem in sendMessage function",
+                cause:"Line:45",
+                where:__filename
+            })
+        }
+        const IsMember = SubRoomInfo.rooms!.members.filter((member)=>{
+            return (member.userId == props.userId && member.roomId == props.roomId && props.username == member.username)
+        })
+
+        if(!IsMember || IsMember.length != 1){
+            throw new InterfaceLayerError({
+                name:"Send Message Error",
+                message:"User is not member of the room",
+                cause:"Line:57",
+                where:__filename
+            })
+        }
+
+        SubRoomInfo.MessageContainer.push({
+            id:crypto.randomUUID().toString(),
+            message:props.message,
+            userId:props.userId,
+            username:props.username,
+            subRoomId:SubRoomInfo.subRoomId
+        })
+
+        //update
+        const update = await this.prismaI.subRoom.update({
+            where:{
+                subRoomId:SubRoomInfo.subRoomId,
+                subRoomName:SubRoomInfo.subRoomName
+            },
+            data:{
+                MessageContainer:{
+                    create:SubRoomInfo.MessageContainer
+                }
+            }
+        })
+
+        return{
+            message:"message recorded"
+        }
+    };
 
     async findUser (props: { userId: string; }) : Promise<{ response: { userId: string; username: string; }; error?: string; }>{
         const response_data = await this.prismaI.users.findFirst({
@@ -16,7 +97,12 @@ export class PrismaAdapter implements prismaI{
         })
 
         if(!response_data || !response_data.userId){
-            throw new Error()
+            throw new InterfaceLayerError({
+                name:"UserNotFound",
+                where:__filename,
+                cause:"user not found ,Line:103",
+                message:"id passed not correspond to a user"
+            })
         }
         return{
             response:{
@@ -73,7 +159,12 @@ export class PrismaAdapter implements prismaI{
             }
         })
         if(!Rooms){
-            throw new Error()
+            throw new InterfaceLayerError({
+                name:"Room Not Found",
+                cause:"inexistent room ,Line: 164",
+                message:"room not found ,id not correspond to any room",
+                where:__filename
+            })
         }
 
         return {
@@ -117,7 +208,12 @@ export class PrismaAdapter implements prismaI{
             }
         })
         if(!RoomMembers){
-            throw new Error()
+            throw new InterfaceLayerError({
+                name:"Insert User To room error",
+                cause : "room not found, Line : 213",
+                message:"unable to insert user to the room",
+                where:__filename
+            })
         }
 
         RoomMembers.members.push({
@@ -154,7 +250,12 @@ export class PrismaAdapter implements prismaI{
             select:{members:true}
         })
         if(!AllMembers){
-            throw new Error()
+            throw new InterfaceLayerError({
+                name:"Room not found",
+                cause : "room not found, Line : 255",
+                message:"unable to find the room",
+                where:__filename
+            })
         }
 
         const IsMember = AllMembers.members.filter((member)=>{
@@ -178,7 +279,12 @@ export class PrismaAdapter implements prismaI{
         })
 
         if(!AllMembers){
-            throw new Error()
+            throw new InterfaceLayerError({
+                name:"room error",
+                cause : "room not found, Line : 284",
+                message:"unable to find the room",
+                where:__filename
+            })
         }
         const IsMember = AllMembers.members.filter((member:any)=>{
             return member.userId === props.userId
@@ -201,7 +307,12 @@ export class PrismaAdapter implements prismaI{
             }
         })
         if(!AllMembers){
-            throw new Error()
+            throw new InterfaceLayerError({
+                name:"room error",
+                cause : "room not found, Line : 312",
+                message:"unable to find the room",
+                where:__filename
+            })
         }
 
         AllMembers.members = AllMembers.members.filter((member)=>{

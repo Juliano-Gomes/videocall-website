@@ -61,9 +61,21 @@ model Rooms {
 
 // roomId: string; subRoomId: string; subRoomName: string; subRoomType: "call" | "message" | "announcements" | "private"; })
 model SubRoom {
-  subRoomId   String  @unique
-  subRoomType String
-  subRoomName String
-  RoomId      String?
-  rooms       Rooms?  @relation(fields: [RoomId], references: [RoomId])
+  subRoomId        String     @unique
+  subRoomType      String
+  subRoomName      String
+  RoomId           String?
+  MessageContainer messages[]
+  rooms            Rooms?     @relation(fields: [RoomId], references: [RoomId])
+}
+
+// subRoom of messages
+// message => subRoom.roomId [ members ] broadcast message to them
+model messages {
+  id        String   @unique
+  username  String
+  userId    String
+  message   String
+  subRoomId String
+  subRoom   SubRoom? @relation(fields: [subRoomId], references: [subRoomId])
 }

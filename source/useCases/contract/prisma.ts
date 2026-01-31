@@ -80,5 +80,7 @@ export interface prismaI{
             roomId:string,
             RoomTitle:string
         }[]
-    })=>Promise<{message:string}>
+    })=>Promise<{message:string}>,
+
+    sendMessage:(props:{roomId:string,username:string,userId:string,subRoomId:string,message:string})=>Promise<{message:string}>
 }
