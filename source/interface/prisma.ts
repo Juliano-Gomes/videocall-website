@@ -1,4 +1,4 @@
-import { prisma } from "../../lib/prisma";
+import type { prisma } from "../../lib/prisma";
 import { prismaI } from "../useCases/contract/prisma";
 import { InterfaceLayerError } from "./error-interface-layer/error";
 
