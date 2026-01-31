@@ -17,7 +17,8 @@ export class CreateRoomUseCase implements CreateRoomI{
                 name:"User not found",
                 where:__filename,
                 message:"User not exists in database",
-                cause:"Inexistent use : Line : 20"
+                cause:"Inexistent use : Line : 20",
+                statusCode:404
             })
         }
         

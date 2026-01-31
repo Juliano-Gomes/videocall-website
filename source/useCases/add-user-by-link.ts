@@ -18,10 +18,11 @@ export class AddUserTORoomUseCase implements addUserToRoom{
         // validate the responses
         if(!User || !User.error){
             throw new createRoomError({
-                name:"gost User",
+                name:"ghost User",
                 cause:"passed a invalid user ; Line : 21",
                 message:"passed a invalid user ",
-                where:__filename
+                where:__filename,
+                statusCode:403
             })
         }
         if(!Room.room || !Room){
@@ -29,7 +30,8 @@ export class AddUserTORoomUseCase implements addUserToRoom{
                 name:"Invalid Room",
                 cause:"passed a invalid room id ; Line : 30",
                 message:"passed a invalid room id ",
-                where:__filename
+                where:__filename,
+                statusCode:403
             }) 
         }
         //is he/she already member !!
@@ -43,7 +45,8 @@ export class AddUserTORoomUseCase implements addUserToRoom{
                 name:"user already exists",
                 message:"User is alrady a member of the room",
                 cause:"tried to register user more then once,Line:45",
-                where:__filename
+                where:__filename,
+                statusCode:400
             })
         }
 

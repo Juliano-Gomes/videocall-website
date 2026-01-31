@@ -35,7 +35,8 @@ export class PrismaAdapter implements prismaI{
                 name:"SubRoomError",
                 cause:"subRoom not found, Line : 30",
                 message:"the room that you are trying to send message Does not exists",
-                where:__filename
+                where:__filename,
+                statusCode:400
             })
         }
         if(SubRoomInfo.subRoomType != "message" || SubRoomInfo.rooms!.members.length <= 0 || SubRoomInfo.rooms){
@@ -43,7 +44,8 @@ export class PrismaAdapter implements prismaI{
                 name:"Send Message Error",
                 message:"some problem in sendMessage function",
                 cause:"Line:45",
-                where:__filename
+                where:__filename,
+                statusCode:403
             })
         }
         const IsMember = SubRoomInfo.rooms!.members.filter((member)=>{
@@ -55,7 +57,8 @@ export class PrismaAdapter implements prismaI{
                 name:"Send Message Error",
                 message:"User is not member of the room",
                 cause:"Line:57",
-                where:__filename
+                where:__filename,
+                statusCode:403
             })
         }
 
@@ -101,7 +104,8 @@ export class PrismaAdapter implements prismaI{
                 name:"UserNotFound",
                 where:__filename,
                 cause:"user not found ,Line:103",
-                message:"id passed not correspond to a user"
+                message:"id passed not correspond to a user",
+                statusCode:404
             })
         }
         return{
@@ -163,7 +167,8 @@ export class PrismaAdapter implements prismaI{
                 name:"Room Not Found",
                 cause:"inexistent room ,Line: 164",
                 message:"room not found ,id not correspond to any room",
-                where:__filename
+                where:__filename,
+                statusCode:404
             })
         }
 
@@ -212,7 +217,8 @@ export class PrismaAdapter implements prismaI{
                 name:"Insert User To room error",
                 cause : "room not found, Line : 213",
                 message:"unable to insert user to the room",
-                where:__filename
+                where:__filename,
+                statusCode:500
             })
         }
 
@@ -254,7 +260,8 @@ export class PrismaAdapter implements prismaI{
                 name:"Room not found",
                 cause : "room not found, Line : 255",
                 message:"unable to find the room",
-                where:__filename
+                where:__filename,
+                statusCode:404
             })
         }
 
@@ -283,7 +290,8 @@ export class PrismaAdapter implements prismaI{
                 name:"room error",
                 cause : "room not found, Line : 284",
                 message:"unable to find the room",
-                where:__filename
+                where:__filename,
+                statusCode:404
             })
         }
         const IsMember = AllMembers.members.filter((member:any)=>{
@@ -311,7 +319,8 @@ export class PrismaAdapter implements prismaI{
                 name:"room error",
                 cause : "room not found, Line : 312",
                 message:"unable to find the room",
-                where:__filename
+                where:__filename,
+                statusCode:400
             })
         }
 
@@ -344,10 +353,12 @@ export class PrismaAdapter implements prismaI{
     
     
     async createUser (props: { username: string; userId: string; communitiesRooms?: { roomId: string; RoomTitle: string; }[]; }) : Promise<{ message: string; }>{
+        const Unique = `${crypto.randomUUID().toString()}-${props.username}`
         const User = await this.prismaI.users.create({
             data:{
                 id:props.userId,
                 username:props.username,
+                userUniqueId :Unique ,
                 userCommunities:{
                     create:props.communitiesRooms
                 }
@@ -355,7 +366,32 @@ export class PrismaAdapter implements prismaI{
         })
 
         return {
-            message:"User Created "
+            message:`Your Account was created ! Your Password Is ${Unique} keepIt ,and do not share it with anyone`
+        }
+    }
+
+    async LoginUser(props:{username:string,userUniqueKey:string}):Promise<{User:any}>{
+        const User = await this.prismaI.users.findFirst({
+            where:{
+                userUniqueId:props.userUniqueKey,
+                username:props.username
+            },
+            include:{
+                userCommunities:true
+            }
+        })
+
+        if(!User){
+            throw new InterfaceLayerError({
+                name:"Invalid User",
+                message:"invalid Password or name",
+                where:__filename,
+                cause:"Invalid credentials",
+                statusCode:403
+            })
+        }
+        return {
+            User
         }
     }
 } 

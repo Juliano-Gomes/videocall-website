@@ -25,6 +25,7 @@ model UserCommunities {
 model Users {
   id              String            @unique
   username        String
+  userUniqueId    String            @unique
   userCommunities UserCommunities[]
 }
 

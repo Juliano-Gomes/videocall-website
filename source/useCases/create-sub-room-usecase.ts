@@ -16,7 +16,8 @@ export class CreateSubRoomUseCase implements CreateSubRoom{
                 name:"invalid room",
                 cause:"passed a invalid room,Line : 15",
                 message:"the room id passed is invalid",
-                where:__filename
+                where:__filename,
+                statusCode:403
             })
         }
         //apply the business logic

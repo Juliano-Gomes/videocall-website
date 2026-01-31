@@ -58,7 +58,8 @@ export class SocketI{
                 name:error.name,
                 message:error.message,
                 cause:error.cause,
-                where:__filename
+                where:__filename,
+                statusCode:500
             })
         }
     }

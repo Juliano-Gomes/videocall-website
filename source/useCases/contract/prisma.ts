@@ -83,4 +83,5 @@ export interface prismaI{
     })=>Promise<{message:string}>,
 
     sendMessage:(props:{roomId:string,username:string,userId:string,subRoomId:string,message:string})=>Promise<{message:string}>
+    ,LoginUser:(props:{username:string,userUniqueKey:string})=>Promise<{User:any}>
 }
