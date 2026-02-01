@@ -23,7 +23,7 @@ export class CreateRoomUseCase implements CreateRoomI{
         }
         
         //apply business logic 
-        const roomEntity = new RoomEntity({description:props.description,owner:{id:User.response.userId,name:User.response.username},roomId,RoomTitle:props.roomTitle}).GetRoomAttributes
+        const roomEntity = new RoomEntity({description:props.description,owner:{id:User.response.userId,name:User.response.username},roomId:roomId,RoomTitle:props.roomTitle}).GetRoomAttributes
         
         //create Room In the dataBase .
         const create = await this.prisma.createRoom({
@@ -33,7 +33,7 @@ export class CreateRoomUseCase implements CreateRoomI{
             roomId:roomEntity.roomId,
             roomTitle:roomEntity.RoomTitle,
             createdAt:roomEntity.createdAt,
-            room_link:`/invite/${roomEntity.roomId}`
+            room_link:`invite/${roomEntity.roomId}`
         })
 
         //return 

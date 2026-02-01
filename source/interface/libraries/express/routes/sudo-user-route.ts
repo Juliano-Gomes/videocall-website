@@ -14,8 +14,8 @@ const TurnUserAdmin=async(request:Request,response:Response)=>{
     })
     try {
         const props = admin.parse({
-            newSuperUser: z.object({ roomId: request.body.newSuperUser.roomId,name: request.body.newSuperUser.name, id: request.body.newSuperUser.id}),
-            administrator: z.object({ roomId: request.body.administrator.roomId ,name: request.body.administrator.name, id: request.body.administrator.id }), 
+            newSuperUser: { roomId: request.body.newSuperUser.roomId,name: request.body.newSuperUser.name, id: request.body.newSuperUser.id},
+            administrator: { roomId: request.body.administrator.roomId ,name: request.body.administrator.name, id: request.body.administrator.id }, 
             roomId: request.body.roomId 
         })
         const prismaI = new PrismaAdapter(prisma)

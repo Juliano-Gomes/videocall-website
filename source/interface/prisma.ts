@@ -5,54 +5,10 @@ import { InterfaceLayerError } from "./error-interface-layer/error";
 export class PrismaAdapter implements prismaI{
     constructor(private prismaI : typeof prisma){}
     async sendMessage(props: { username: string; roomId:string;userId: string; subRoomId: string; message: string; }) :Promise<{ message: string; }>{
-        const SubRoomInfo = await this.prismaI.subRoom.findFirst({
-            where:{
-                subRoomId:props.subRoomId
-            },
-            include:{
-                rooms:{
-                    where:{
-                        RoomId:props.roomId
-                    },
-                    select:{
-                        RoomId:true,
-                        RoomTitle:true,
-                        members:{
-                            where:{
-                                userId:props.userId,
-                                username:props.username
-                            }
-                        }
-                    }
-                },
-                MessageContainer:true
-            }
-        })
-
-        //create the message 
-        if(!SubRoomInfo){
-            throw new InterfaceLayerError({
-                name:"SubRoomError",
-                cause:"subRoom not found, Line : 30",
-                message:"the room that you are trying to send message Does not exists",
-                where:__filename,
-                statusCode:400
-            })
-        }
-        if(SubRoomInfo.subRoomType != "message" || SubRoomInfo.rooms!.members.length <= 0 || SubRoomInfo.rooms){
-            throw new InterfaceLayerError({
-                name:"Send Message Error",
-                message:"some problem in sendMessage function",
-                cause:"Line:45",
-                where:__filename,
-                statusCode:403
-            })
-        }
-        const IsMember = SubRoomInfo.rooms!.members.filter((member)=>{
-            return (member.userId == props.userId && member.roomId == props.roomId && props.username == member.username)
-        })
-
-        if(!IsMember || IsMember.length != 1){
+        //is he member 
+       const response = await this.IsMember({roomId:props.roomId,userId:props.userId})
+       
+       if(!response){
             throw new InterfaceLayerError({
                 name:"Send Message Error",
                 message:"User is not member of the room",
@@ -61,27 +17,15 @@ export class PrismaAdapter implements prismaI{
                 statusCode:403
             })
         }
-
-        SubRoomInfo.MessageContainer.push({
-            id:crypto.randomUUID().toString(),
-            message:props.message,
-            userId:props.userId,
-            username:props.username,
-            subRoomId:SubRoomInfo.subRoomId
-        })
-
-        //update
-        const update = await this.prismaI.subRoom.update({
-            where:{
-                subRoomId:SubRoomInfo.subRoomId,
-                subRoomName:SubRoomInfo.subRoomName
-            },
+       await this.prismaI.messages.create({
             data:{
-                MessageContainer:{
-                    create:SubRoomInfo.MessageContainer
-                }
+                id:crypto.randomUUID().toString(),
+                message:props.message,
+                userId:props.userId,
+                username:props.username,
+                subRoomId:props.subRoomId,
             }
-        })
+       })
 
         return{
             message:"message recorded"
@@ -94,12 +38,13 @@ export class PrismaAdapter implements prismaI{
                 id:props.userId
             },
             select:{
-                userId:true,
-                username:true
+                userUniqueId:true,
+                username:true,
+                id:true
             }
         })
 
-        if(!response_data || !response_data.userId){
+        if(!response_data || !response_data.id){
             throw new InterfaceLayerError({
                 name:"UserNotFound",
                 where:__filename,
@@ -110,7 +55,7 @@ export class PrismaAdapter implements prismaI{
         }
         return{
             response:{
-                userId:response_data.userId,
+                userId:response_data.id,
                 username:response_data.username
             }
         }
@@ -147,8 +92,17 @@ export class PrismaAdapter implements prismaI{
             }
         })
 
+        // adding  the room in the users communities camp
+        await this.prismaI.userCommunities.create({
+            data:{
+                usersId:props.owner.id,
+                roomId:props.roomId,
+                RoomTitle:props.roomTitle
+            }
+        })
+
         return{
-            message:"room created"
+            message:`http://localhost:3000/${props.room_link}`
         }
     }
     
@@ -204,44 +158,27 @@ export class PrismaAdapter implements prismaI{
     }
     
     async addUserToRoom (props: { roomId: string; userid: string; username: string; addedAt: Date; privilege: string; }) : Promise<{ message: string; }>{
-        const RoomMembers = await this.prismaI.rooms.findFirst({
-            where:{
-                RoomId:props.roomId
-            },
-            select:{
-                members:true
-            }
-        })
-        if(!RoomMembers){
-            throw new InterfaceLayerError({
-                name:"Insert User To room error",
-                cause : "room not found, Line : 213",
-                message:"unable to insert user to the room",
-                where:__filename,
-                statusCode:500
-            })
-        }
+        const memberId = crypto.randomUUID().toString()
 
-        RoomMembers.members.push({
-            addedAt:props.addedAt,
-            id:crypto.randomUUID().toString(),
-            privilege:props.privilege,
-            roomId:props.roomId,
-            userId:props.userid,
-            username:props.username
-        })
-
-        // add new user
-        const Room = await this.prismaI.rooms.update({
-            where:{
-                RoomId:props.roomId
-            },
+        await this.prismaI.members.create({
             data:{
-                members:{
-                    create:RoomMembers.members
-                }
+                addedAt:props.addedAt,
+                id:memberId,
+                privilege:props.privilege,
+                roomId:props.roomId,
+                userId:props.userid,
+                username:props.username
             }
-        })
+       })
+       const title = await this.findRoom({roomId:props.roomId})
+
+       await this.prismaI.userCommunities.create({
+            data:{
+                roomId:props.roomId,
+                usersId:props.userid, 
+                RoomTitle:title.room.roomTitle,
+            }
+       })
 
         return {
             message:"User added "
@@ -249,112 +186,76 @@ export class PrismaAdapter implements prismaI{
     }
     
     async IsMember (props: { roomId: string; userId: string; }) : Promise<boolean>{
-        const AllMembers = await this.prismaI.rooms.findFirst({
+        const data = await this.prismaI.members.findFirst({
             where:{
-                RoomId:props.roomId
-            },
-            select:{members:true}
-        })
-        if(!AllMembers){
+                roomId:props.roomId,
+                userId:props.userId
+            }
+       })
+        if(!data){
             throw new InterfaceLayerError({
-                name:"Room not found",
-                cause : "room not found, Line : 255",
+                name:"membership error",
+                cause : "user not found in room, Line : 255",
                 message:"unable to find the room",
                 where:__filename,
                 statusCode:404
             })
         }
 
-        const IsMember = AllMembers.members.filter((member)=>{
-            return (member.userId === props.userId && member.roomId === props.roomId)
-        })
-
-        if(IsMember && IsMember[0].userId){
+        if(data && data.userId == props.userId && data.roomId == props.roomId){
             return true
         }
         return false
     }
     
     async isUserAlreadyAdmin (props: { roomId: string; userId: string; }) : Promise<boolean>{
-        const AllMembers = await this.prismaI.rooms.findFirst({
+       const data = await this.prismaI.members.findFirst({
             where:{
-                RoomId:props.roomId
-            },
-            select:{
-                members:true
+                roomId:props.roomId,
+                userId:props.userId
             }
-        })
+       })
 
-        if(!AllMembers){
+        if(!data){
             throw new InterfaceLayerError({
-                name:"room error",
-                cause : "room not found, Line : 284",
+                name:"membership error",
+                cause : "user not found in the room, Line : 284",
                 message:"unable to find the room",
                 where:__filename,
                 statusCode:404
             })
         }
-        const IsMember = AllMembers.members.filter((member:any)=>{
-            return member.userId === props.userId
-        })
 
-        if(IsMember && IsMember[0].userId && IsMember[0].privilege == process.env.privilege!){
+        if(data && data.userId && data.privilege == process.env.privilege!){
             return true
         }
         return false
     }
     
-    async turnUserToAdmin (props: { userid: string; username: string; privilege: string; addedAt: Date; roomId: string; }) : Promise<{ message: string; }>{
-        const AllMembers = await this.prismaI.rooms.findFirst({
+    async turnUserToAdmin (props: { userid: string;username: string; privilege: string; addedAt: Date; roomId: string; }) : Promise<{ message: string; }>{
+        const memberId = await this.memberId({roomId:props.roomId,useId:props.userid})
+        await this.prismaI.members.update({
             where:{
-                RoomId:props.roomId
-            },
-            select:{
-                members:true,
-                RoomTitle:true
-            }
-        })
-        if(!AllMembers){
-            throw new InterfaceLayerError({
-                name:"room error",
-                cause : "room not found, Line : 312",
-                message:"unable to find the room",
-                where:__filename,
-                statusCode:400
-            })
-        }
-
-        AllMembers.members = AllMembers.members.filter((member)=>{
-            if(member.userId === props.userid){
-                member = {
-                    id:crypto.randomUUID().toString(),
-                    privilege:props.privilege || process.env.privilege!,
-                    addedAt:props.addedAt,
-                    roomId:props.roomId,
-                    userId:props.userid,
-                    username:props.username
-                }
-            }
-            return member
-        })
-
-        const update = await this.prismaI.rooms.update({
-            where:{
-                RoomId:props.roomId
+                userId:props.userid,
+                roomId:props.roomId,
+                id:memberId.memberId
             },
             data:{
-                members:{create:AllMembers.members}
+                privilege:props.privilege,
+                addedAt:props.addedAt
             }
         })
+
+        
        return {
-            message:`congrats ${props.username} you're now an admin in the ${AllMembers.RoomTitle} room`
+            message:`congrats ${props.username} you're now an admin in this room`
         }
     }
     
     
     async createUser (props: { username: string; userId: string; communitiesRooms?: { roomId: string; RoomTitle: string; }[]; }) : Promise<{ message: string; }>{
-        const Unique = `${crypto.randomUUID().toString()}-${props.username}`
-        const User = await this.prismaI.users.create({
+        const Unique = `${crypto.randomUUID().toString()}-${props.userId}`
+        await this.prismaI.users.create({
             data:{
                 id:props.userId,
                 username:props.username,
@@ -366,7 +267,7 @@ export class PrismaAdapter implements prismaI{
         })
 
         return {
-            message:`Your Account was created ! Your Password Is ${Unique} keepIt ,and do not share it with anyone`
+            message:`Your Account was created ! Your permanent password Is ${Unique} keepIt ,and do not share it with anyone`
         }
     }
 
@@ -392,6 +293,32 @@ export class PrismaAdapter implements prismaI{
         }
         return {
             User
+        }
+    }
+
+    async memberId(props:{roomId:string,useId:string}):Promise<{memberId:string}>{
+        const member = await this.prismaI.members.findFirst({
+            where:{
+                roomId:props.roomId,
+                userId:props.useId
+            },
+            select:{
+                id:true
+            }
+        })
+
+        if(!member || !member.id){
+            throw new InterfaceLayerError({
+                name:"member Id",
+                message:"unable to get member Id",
+                where:__filename,
+                cause:"unable to get member Id",
+                statusCode:500
+            })
+        }
+
+        return{
+            memberId:member!.id
         }
     }
 } 

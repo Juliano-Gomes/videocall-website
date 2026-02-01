@@ -70,7 +70,7 @@ export interface prismaI{
         username:string,
         privilege:string,
         addedAt:Date,
-        roomId:string
+        roomId:string,
     })=>Promise<{message:string}>,
 
     createUser:(props:{

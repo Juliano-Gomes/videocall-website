@@ -2,7 +2,7 @@ type sudo={
     newSuperUser :{
         roomId:string
         name:string,
-        id:string
+        id:string,
     },
     administrator : {
         roomId:string

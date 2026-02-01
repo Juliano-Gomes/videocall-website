@@ -16,9 +16,9 @@ const Room=async(request:Request,response:Response)=>{
     })
     try {
         const props = RoomI.parse({
-            roomTitle:request.body.title,
+            roomTitle:request.body.roomTitle,
             owner:{
-                id:request.body.owner
+                id:request.body.owner.id
             },
             description:request.body.description
         })

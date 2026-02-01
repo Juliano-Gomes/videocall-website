@@ -142,3 +142,5 @@ vite.config.ts.timestamp-*
 .vscode/
 .vscode/*
 /generated/prisma
+
+*.http

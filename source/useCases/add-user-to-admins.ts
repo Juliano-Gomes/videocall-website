@@ -5,7 +5,7 @@ import { prismaI } from "./contract/prisma";
 
 export class TurnUserAdministrator implements TurnIntoSuperUser{
     constructor(private prisma : prismaI){}
-    async sudo (props: { newSuperUser: { roomId: string; name: string; id: string; }; administrator: { roomId: string; name: string; id: string; }; roomId: string; }) :Promise<{ message: string; }>{
+    async sudo (props: { newSuperUser: { roomId: string; name: string; id: string }; administrator: { roomId: string; name: string; id: string; }; roomId: string; }) :Promise<{ message: string; }>{
         // Does group exists
         const newSuperUser = await this.prisma.findUser({
             userId:props.newSuperUser.id
@@ -86,7 +86,7 @@ export class TurnUserAdministrator implements TurnIntoSuperUser{
             userId:newSuperUser.response.userId,
             username:newSuperUser.response.username,
             roomId:Room.room.roomId,
-            adminId:administrator.response.userId
+            adminId:administrator.response.userId,
         },admins).getNewAdmin
 
         //update user privilege
