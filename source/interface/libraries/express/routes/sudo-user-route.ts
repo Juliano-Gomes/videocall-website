@@ -20,7 +20,7 @@ const TurnUserAdmin=async(request:Request,response:Response)=>{
         })
         const prismaI = new PrismaAdapter(prisma)
         const addI = new TurnUserAdministrator(prismaI)
-        const sudo = addI.sudo(props)
+        const sudo = await addI.sudo(props)
         
         response.status(200).json(sudo)
     } catch (error:any) {
@@ -29,20 +29,20 @@ const TurnUserAdmin=async(request:Request,response:Response)=>{
                 message:"Invalid data",
                 name:"Invalid data error"
             })
+        }else{
+            const code = error.statusCode || 500
+            const message= error.message || "unknown error dev already notified!"
+            const name = error.name || "Unknown error"
+            console.info({
+                reason:error.cause,
+                file:error.where || null
+            })
+    
+            response.status(code).json({
+                message,
+                name
+            })
         }
-        const code = error.statusCode || 500
-        const message= error.message || "unknown error dev already notified!"
-        const name = error.name || "Unknown error"
-        console.info({
-            message:"here",
-            reason:error.cause,
-            file:error.where || null
-        })
-
-        response.status(code).json({
-            message,
-            name
-        })
     }
 }
 

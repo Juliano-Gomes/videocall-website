@@ -34,19 +34,20 @@ const Room=async(request:Request,response:Response)=>{
                         message:"Invalid data",
                         name:"Invalid data error"
                     })
-                }
-        const code = error.statusCode || 500
-        const message= error.message || "unknown error dev already notified!"
-        const name = error.name || "Unknown error"
-        console.log({
-            reason:error.cause,
-            file:error.where || null
-        })
-
-        response.status(code).json({
-            message,
-            name
-        })
+        }else{
+            const code = error.statusCode || 500
+            const message= error.message || "unknown error dev already notified!"
+            const name = error.name || "Unknown error"
+            console.log({
+                reason:error.cause,
+                file:error.where || null
+            })
+    
+            response.status(code).json({
+                message,
+                name
+            })
+        }
     }
 }
 

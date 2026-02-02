@@ -1,27 +1,25 @@
 import { Request, Response, Router } from "express";
+import { z,ZodError } from "zod";
 import { PrismaAdapter } from "../../../prisma";
 import { prisma } from "../../../../../lib/prisma";
-import {z, ZodError} from 'zod'
-import { CreateSubRoomUseCase } from "../../../../useCases/create-sub-room-usecase";
+import { RoomDataRetrieverUseCase } from "../../../../useCases/room-data-retriever";
 
-export const SubRoomRoute = Router()
-
-const SubRoom=async(request:Request,response:Response)=>{
-    const subRoomI = z.object({
-        roomId: z.string(), subRoomName: z.string(), subRoomType: z.enum(["call" , "message" , "announcements" , "private"])
-    })
+export const RoomRetrievedData = Router()
+const RoomDataHandler = async (request:Request,response:Response)=>{
+    const params = z.object({roomId:z.string()})
     try {
-        const props = subRoomI.parse(request.body)
+        const props= params.parse({roomId:request.params.roomId})
         const prismaI = new PrismaAdapter(prisma)
-        const subI = new CreateSubRoomUseCase(prismaI)
-        const create = await subI.room(props)
+        // useCase => Retrieve data 
+        const resultI = new RoomDataRetrieverUseCase(prismaI)
+        const RoomInfo = await resultI.retrieve(props)
 
-        response.status(201).json(create)
+        response.status(200).json(RoomInfo)
     } catch (error:any) {
         if(error instanceof ZodError){
             response.status(403).json({
-                name:"Invalid data error",
-                message:"Invalid data , subRoom can only message or call"
+                message:"Invalid data",
+                name:"Invalid data error"
             })
         }else{
             const code = error.statusCode || 500
@@ -31,14 +29,13 @@ const SubRoom=async(request:Request,response:Response)=>{
                 reason:error.cause,
                 file:error.where || null
             })
-    
+            
             response.status(code).json({
                 message,
                 name
-            })
-
+            })        
         }
     }
 }
 
-SubRoomRoute.post("/createSubRoom",SubRoom)
+RoomRetrievedData.get("/Room/info/:roomId",RoomDataHandler)

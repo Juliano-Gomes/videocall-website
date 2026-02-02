@@ -345,4 +345,37 @@ export class PrismaAdapter implements prismaI{
             rooms:results
         }
     }
+
+    async retrieve(props:{roomId:string}):Promise<{roomInfo:any}>{
+        const result = await this.prismaI.rooms.findFirst({
+            where:{
+                RoomId:props.roomId
+            },
+            include:{
+                members:true,
+                SubRooms:{
+                    include:{
+                        MessageContainer:true
+                    }
+                },
+                owners:true
+            }
+        })
+        if(!result){
+            throw new InterfaceLayerError({
+                name:"Room Error",
+                message:"Room not found",
+                cause:"room not found",
+                statusCode:404,
+                where:__filename
+            })
+        }
+
+        return{
+            roomInfo:{...result,createdAt:new Intl.DateTimeFormat('pt-BR',{
+                    dateStyle: 'full',
+                    timeStyle: 'medium',
+            }).format(result.createdAt)}
+        }
+    }
 } 
