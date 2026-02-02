@@ -19,7 +19,7 @@ export class TurnUserAdministrator implements TurnIntoSuperUser{
         })
     
         // validate the responses
-        if(!newSuperUser || !newSuperUser.error){
+        if(!newSuperUser || newSuperUser.error){
             throw new createRoomError({
                 name:"ghost User",
                 cause:"passed a invalid user , Line : 21",
@@ -62,7 +62,7 @@ export class TurnUserAdministrator implements TurnIntoSuperUser{
                 message:"User provided is already admin!",
                 cause:"permission denied, Line:58",
                 where:__filename,
-                statusCode:400
+                statusCode:403
             })
         }
 

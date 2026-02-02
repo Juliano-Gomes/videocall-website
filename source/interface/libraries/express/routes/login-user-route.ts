@@ -1,7 +1,7 @@
 import { Request, Response, Router } from "express";
 import { PrismaAdapter } from "../../../prisma";
 import { prisma } from "../../../../../lib/prisma";
-import {z} from 'zod'
+import {z, ZodError} from 'zod'
 import { SignUpUserUseCase } from "../../../../useCases/sign-up-user";
 
 export const LoginUserRoute = Router()
@@ -20,6 +20,12 @@ const LogUser=async(request:Request,response:Response)=>{
         response.status(200).json(logI)
         
     } catch (error:any) {
+        if(error instanceof ZodError){
+                response.status(403).json({
+                    message:"Invalid data",
+                    name:"Invalid data error"
+                })
+            }
         const code = error.statusCode || 500
         const message= error.message || "unknown error dev already notified!"
         const name = error.name || "Unknown error"

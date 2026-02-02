@@ -1,7 +1,7 @@
 import { Request, Response, Router } from "express";
 import { PrismaAdapter } from "../../../prisma";
 import { prisma } from "../../../../../lib/prisma";
-import {z} from 'zod'
+import {z, ZodError} from 'zod'
 import { TurnUserAdministrator } from "../../../../useCases/add-user-to-admins";
 
 export const TurnUserAdminRoute = Router()
@@ -24,10 +24,17 @@ const TurnUserAdmin=async(request:Request,response:Response)=>{
         
         response.status(200).json(sudo)
     } catch (error:any) {
+        if(error instanceof ZodError){
+            response.status(403).json({
+                message:"Invalid data",
+                name:"Invalid data error"
+            })
+        }
         const code = error.statusCode || 500
         const message= error.message || "unknown error dev already notified!"
         const name = error.name || "Unknown error"
-        console.log({
+        console.info({
+            message:"here",
             reason:error.cause,
             file:error.where || null
         })

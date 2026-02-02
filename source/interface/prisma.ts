@@ -30,7 +30,7 @@ export class PrismaAdapter implements prismaI{
         return{
             message:"message recorded"
         }
-    };
+    }
 
     async findUser (props: { userId: string; }) : Promise<{ response: { userId: string; username: string; }; error?: string; }>{
         const response_data = await this.prismaI.users.findFirst({
@@ -192,15 +192,6 @@ export class PrismaAdapter implements prismaI{
                 userId:props.userId
             }
        })
-        if(!data){
-            throw new InterfaceLayerError({
-                name:"membership error",
-                cause : "user not found in room, Line : 255",
-                message:"unable to find the room",
-                where:__filename,
-                statusCode:404
-            })
-        }
 
         if(data && data.userId == props.userId && data.roomId == props.roomId){
             return true
@@ -215,16 +206,6 @@ export class PrismaAdapter implements prismaI{
                 userId:props.userId
             }
        })
-
-        if(!data){
-            throw new InterfaceLayerError({
-                name:"membership error",
-                cause : "user not found in the room, Line : 284",
-                message:"unable to find the room",
-                where:__filename,
-                statusCode:404
-            })
-        }
 
         if(data && data.userId && data.privilege == process.env.privilege!){
             return true
@@ -319,6 +300,49 @@ export class PrismaAdapter implements prismaI{
 
         return{
             memberId:member!.id
+        }
+    }
+    async searchRoom(props:{name:string}):Promise<{rooms:{roomId:string,roomTitle:string,members:number,room_link:string,createdAt:string}[]}>{
+        const response = await this.prismaI.rooms.findMany({
+            where:{
+                RoomTitle:{
+                    contains:props.name.toLowerCase(),
+                    mode:"insensitive"
+                }
+            },
+            select:{
+                RoomId:true,
+                createdAt:true,
+                RoomTitle:true,
+                room_link:true,
+                members:true
+            }
+        })
+
+        if(!response){
+            throw new InterfaceLayerError({
+                statusCode:404,
+                name:"find Error",
+                message:"your search did not result to anything",
+                cause:"no room found",
+                where:__filename
+            })
+        }
+        const results = response.map((room)=>{
+            return {
+                roomId : room.RoomId,
+                roomTitle:room.RoomTitle,
+                createdAt:new Intl.DateTimeFormat('pt-BR',{
+                    dateStyle: 'full',
+                    timeStyle: 'medium',
+                }).format(room.createdAt),
+                members:room.members.length,
+                room_link:room.room_link
+            }
+        })
+
+        return {
+            rooms:results
         }
     }
 } 

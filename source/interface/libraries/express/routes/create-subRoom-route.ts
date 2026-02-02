@@ -1,7 +1,7 @@
 import { Request, Response, Router } from "express";
 import { PrismaAdapter } from "../../../prisma";
 import { prisma } from "../../../../../lib/prisma";
-import {z} from 'zod'
+import {z, ZodError} from 'zod'
 import { CreateSubRoomUseCase } from "../../../../useCases/create-sub-room-usecase";
 
 export const SubRoomRoute = Router()
@@ -18,6 +18,12 @@ const SubRoom=async(request:Request,response:Response)=>{
 
         response.status(201).json(create)
     } catch (error:any) {
+        if(error instanceof ZodError){
+                    response.status(403).json({
+                        message:"Invalid data",
+                        name:"Invalid data error"
+                    })
+                }
         const code = error.statusCode || 500
         const message= error.message || "unknown error dev already notified!"
         const name = error.name || "Unknown error"

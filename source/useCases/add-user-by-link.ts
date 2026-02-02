@@ -16,7 +16,7 @@ export class AddUserTORoomUseCase implements addUserToRoom{
         })
 
         // validate the responses
-        if(!User || !User.error){
+        if(!User || User.error){
             throw new createRoomError({
                 name:"ghost User",
                 cause:"passed a invalid user ; Line : 21",

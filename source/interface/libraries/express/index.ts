@@ -11,6 +11,7 @@ import { SubRoomRoute } from './routes/create-subRoom-route'
 import { EnterRoomRoute } from './routes/enter-room-route'
 import { TurnUserAdminRoute } from './routes/sudo-user-route'
 import { LoginUserRoute } from './routes/login-user-route'
+import { SearchRoomRoute } from './routes/search-room-route'
 
 //Setting up Server
 const app = express()
@@ -35,7 +36,7 @@ app.use(SubRoomRoute)
 app.use(EnterRoomRoute)
 app.use(TurnUserAdminRoute)
 app.use(LoginUserRoute)
-
+app.use(SearchRoomRoute)
 export{
     httpServer
 } 

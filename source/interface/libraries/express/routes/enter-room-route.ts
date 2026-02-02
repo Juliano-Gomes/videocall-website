@@ -1,7 +1,7 @@
 import { Request, Response, Router } from "express";
 import { PrismaAdapter } from "../../../prisma";
 import { prisma } from "../../../../../lib/prisma";
-import {z} from 'zod'
+import {z, ZodError} from 'zod'
 import { AddUserTORoomUseCase } from "../../../../useCases/add-user-by-link";
 
 export const EnterRoomRoute = Router()
@@ -9,14 +9,25 @@ export const EnterRoomRoute = Router()
 const EnterRoom=async(request:Request,response:Response)=>{
     const EnterI = z.object({ userId: z.string() ,username: z.string(), roomId: z.string() ,link: z.string() })
     try {
-        const props = EnterI.parse(request.body)
+        const props = EnterI.parse({
+            userId:request.body.userId,
+            username:request.body.username,
+            roomId:request.body.roomId,
+            link:request.body.link
+        })
         const prismaI = new PrismaAdapter(prisma)
         const enter = new AddUserTORoomUseCase(prismaI)
         const enterI = await enter.add(props)
 
         response.status(200).json(enterI)
     } catch (error:any) {
-             const code = error.statusCode || 500
+        if(error instanceof ZodError){
+                    response.status(403).json({
+                        message:"Invalid data",
+                        name:"Invalid data error"
+                    })
+                }
+        const code = error.statusCode || 500
         const message= error.message || "unknown error dev already notified!"
         const name = error.name || "Unknown error"
         console.log({
