@@ -8,7 +8,7 @@ export const UserRoute = Router()
 
 const User=async(request:Request,response:Response)=>{
     const UserI = z.object({
-        communitiesRooms :z.array(z.object({roomId:z.string(),RoomTitle:z.string()})).optional(),
+        communitiesRooms :z.array(z.object({roomId:z.string(),communityId:z.string(),RoomTitle:z.string()})).optional(),
         username:z.string()
     })
     try {

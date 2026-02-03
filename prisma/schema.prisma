@@ -16,10 +16,11 @@ datasource db {
 //schemas
 //{roomId:string,RoomTitle:string}
 model UserCommunities {
-  roomId    String @unique
-  RoomTitle String
-  usersId   String
-  userId    Users  @relation(fields: [usersId], references: [id])
+  communityId String @id @unique
+  roomId      String
+  RoomTitle   String
+  usersId     String
+  userId      Users  @relation(fields: [usersId], references: [id])
 }
 
 model Users {

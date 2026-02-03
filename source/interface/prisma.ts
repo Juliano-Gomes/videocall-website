@@ -158,12 +158,10 @@ export class PrismaAdapter implements prismaI{
     }
     
     async addUserToRoom (props: { roomId: string; userid: string; username: string; addedAt: Date; privilege: string; }) : Promise<{ message: string; }>{
-        const memberId = crypto.randomUUID().toString()
-
         await this.prismaI.members.create({
             data:{
                 addedAt:props.addedAt,
-                id:memberId,
+                id:crypto.randomUUID().toString(),
                 privilege:props.privilege,
                 roomId:props.roomId,
                 userId:props.userid,
@@ -174,7 +172,8 @@ export class PrismaAdapter implements prismaI{
 
        await this.prismaI.userCommunities.create({
             data:{
-                roomId:props.roomId,
+                communityId:crypto.randomUUID().toString(),
+                roomId:title.room.roomId,
                 usersId:props.userid, 
                 RoomTitle:title.room.roomTitle,
             }
@@ -232,9 +231,8 @@ export class PrismaAdapter implements prismaI{
             message:`congrats ${props.username} you're now an admin in this room`
         }
     }
-    
-    
-    async createUser (props: { username: string; userId: string; communitiesRooms?: { roomId: string; RoomTitle: string; }[]; }) : Promise<{ message: string; }>{
+
+    async createUser (props: { username: string; userId: string; communitiesRooms?: { roomId: string; RoomTitle: string,communityId:string }[]; }) : Promise<{ message: string; }>{
         const Unique = `${crypto.randomUUID().toString()}-${props.userId}`
         await this.prismaI.users.create({
             data:{

@@ -78,7 +78,8 @@ export interface prismaI{
         userId:string,
         communitiesRooms?:{
             roomId:string,
-            RoomTitle:string
+            RoomTitle:string,
+            communityId:string
         }[]
     })=>Promise<{message:string}>,
     retrieve:(props:{roomId:string})=>Promise<{roomInfo:any}>,
