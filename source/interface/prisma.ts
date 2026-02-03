@@ -95,6 +95,7 @@ export class PrismaAdapter implements prismaI{
         // adding  the room in the users communities camp
         await this.prismaI.userCommunities.create({
             data:{
+                communityId:crypto.randomUUID().toString(),
                 usersId:props.owner.id,
                 roomId:props.roomId,
                 RoomTitle:props.roomTitle
